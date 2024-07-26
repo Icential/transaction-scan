@@ -2,7 +2,6 @@
 import cv2
 import pandas as pd
 import fitz
-import matplotlib.pyplot as plt
 import pytesseract
 import time
 
@@ -20,7 +19,7 @@ def raw_values(img_name):
     page_height = page.shape[0]
 
     # crop page
-    page = page[int(page_height * 0.282):, :]
+    page = page[int(page_height * 0.332):, :]
 
     # define threshold
     retval, thresh = cv2.threshold(page, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
@@ -60,8 +59,7 @@ def raw_values(img_name):
 def sorting(list, page, page_num):
     sorted_list = sorted(list, key = lambda x: x[0]) # sort by width first
     sorted_list = sorted(sorted_list, key = lambda x: x[1]) # then height
-    r = 0
-
+    
     # create dataframe
     df = pd.DataFrame(sorted_list)
     df.columns = ["x", "y", "Text"]
@@ -73,13 +71,14 @@ def sorting(list, page, page_num):
     df["Text"] = df["Text"].str.replace("\n", "")
     df = df.drop(df[(df.Text == "|") | (df.Text == "| |")].index)
 
-    for i in range(df.shape[0]):
-        if i == 0:
-            r = df["y"].iloc[0]
 
+
+    r = df[df["x"] == df["x"].min()]["y"].iloc[0]
+
+    for i in range(df.shape[0]):
         y = df["y"].iloc[i]
 
-        if y <= r+5:
+        if r-5 <= y <= r+5:
             df["y"].iloc[i] = r
         else:
             r = y
@@ -87,13 +86,29 @@ def sorting(list, page, page_num):
     # sort again left to right, top to bottom
     df = df.sort_values(by=["y", "x"])
 
-    t = pd.DataFrame(columns=["Tanggal", "Keterangan 1", "Keterangan 2", "CBG", "Mutasi", "Saldo"])
+    for i in range(df.shape[0]):
+        y = df["y"].iloc[i]
+        next_y = y
 
-    tanggal_text = ""; keterangan1_text = ""; keterangan2_text = ""; cbg_text = ""; mutasi_text = ""; saldo_text = ""
-    tanggals = []; keterangan1s = []; keterangan2s = []; cbgs = []; mutasis = []; saldos = []
+        for j in range(df.shape[0]-i):
+            new_y = df["y"].iloc[i+j]
+            if new_y != next_y:
+                next_y = new_y
+                break
+        
+        if next_y-y < 35:
+            df["y"].iloc[i] = next_y
+
+    # sort again left to right, top to bottom
+    df = df.sort_values(by=["y", "x"])
+
+
+
+    pdate = ""; edate = ""; branch = ""; journal = ""; tdesc = ""; amount = ""; dbcr = ""; bal = ""
+    pdates = []; edates = []; branchs = []; journals = []; tdescs = []; amounts = []; dbcrs = []; bals = []
 
     # prevents summary at the end of pdf to be added
-    exit = 0 # if SALDO and AWAL is detected in columns keterangan1 and keterangan2 correspondingly, append arrays and break
+    # exit = 0 # if SALDO and AWAL is detected in columns keterangan1 and keterangan2 correspondingly, append arrays and break
 
     df = df._append({"x": 500, "y": 0, "Text": "a"}, ignore_index=True)
 
@@ -101,104 +116,113 @@ def sorting(list, page, page_num):
         x = df["x"].iloc[i]
         text = df["Text"].iloc[i]
         
-        if 0 < x < 700:
-            if keterangan1_text != "":
-                tanggals.append(tanggal_text)
-                keterangan1s.append(keterangan1_text)
-                keterangan2s.append(keterangan2_text)
-                cbgs.append(cbg_text)
-                mutasis.append(mutasi_text)
-                saldos.append(saldo_text)
+        if x < 1000:
+            if "Ledger" in edate:
+                pdate = ""; edate = ""; branch = ""; journal = ""; tdesc = ""; amount = ""; dbcr = ""; bal = ""
+            elif not (220 < x):
+                pdates.append(pdate)
+                edates.append(edate)
+                branchs.append(branch)
+                journals.append(journal)
+                tdescs.append(tdesc)
+                amounts.append(amount)
+                dbcrs.append(dbcr)
+                bals.append(bal)
 
-                tanggal_text = ""; keterangan1_text = ""; keterangan2_text = ""; cbg_text = ""; mutasi_text = ""; saldo_text = ""
+                pdate = ""; edate = ""; branch = ""; journal = ""; tdesc = ""; amount = ""; dbcr = ""; bal = ""
 
-            tanggal_text += text + ""
-        elif 700 < x < 1550:
-            if text == "SALDO" or text == "AWAL":
-                if page_num == "0":
-                    continue
-                else:
-                    exit += 1
+            pdate += text
+
+        elif 1000 < x < 1950:
+            if text == "Ending": # last page
+                pdates.append(pdate)
+                edates.append(edate)
+                branchs.append(branch)
+                journals.append(journal)
+                tdescs.append(tdesc)
+                amounts.append(amount)
+                dbcrs.append(dbcr)
+                bals.append(bal)
+
+                break
             else:
-                keterangan1_text += text + " "
-        elif 1550 < x < 2500:
-            if text == "SALDO" or text == "AWAL":
-                if page_num == "0":
-                    continue
-                else:
-                    exit += 1
-            else:
-                keterangan2_text += text + " "
-        elif 2500 < x < 2900:
-            cbg_text += text + " "
-        elif 2900 < x < 4000:
-            mutasi_text += text + " "
-        elif 4000 < x < page.shape[1]:
-            saldo_text += text + " "
+                edate += text
+        elif 1950 < x < 2450:
+            branch += text + " "
+        elif 2450 < x < 2790:
+            journal += text
+        elif 2790 < x < 4170:
+            tdesc += text + " "
+        elif 4170 < x < 4850:
+            amount += text
+        elif 4850 < x < 5100:
+            dbcr += text
+        elif 5100 < x:
+            bal += text
 
-        if exit == 2:
-            tanggals.append(tanggal_text)
-            keterangan1s.append(keterangan1_text)
-            keterangan2s.append(keterangan2_text)
-            cbgs.append(cbg_text)
-            mutasis.append(mutasi_text)
-            saldos.append(saldo_text)
-
-            tanggal_text = ""; keterangan1_text = ""; keterangan2_text = ""; cbg_text = ""; mutasi_text = ""; saldo_text = ""
-
-            break
 
     t = pd.DataFrame({
-                "Tanggal": tanggals,
-                "Keterangan 1": keterangan1s,
-                "Keterangan 2": keterangan2s,
-                "CBG": cbgs,
-                "Mutasi": mutasis,
-                "Saldo": saldos 
+                "Posting Date": pdates,
+                "Effective Date": edates,
+                "Branch": branchs,
+                "Journal": journals,
+                "Transaction Description": tdescs,
+                "Amount": amounts,
+                "DB/CR": dbcrs,
+                "Balance": bals
             })
-    
-    t = t[t["Keterangan 1"].str.contains("AWAL") == False] # delete very first row
-    t = t[t["Tanggal"].str.contains("a") == False] # delete
+
+    t = t[(t["Posting Date"] == "a") == False] # delete
+    t = t[(t["Posting Date"] == "") == False]
+
+
 
     # remove every element's last character (which is some unnecessary space)
     for col in t.columns:
-        if col != "Tanggal":
+        if col == "Branch" or col == "Transaction Description":
             t[col] = t[col].str[:-1]
-
-    # remove spacing in saldo
-    t["Mutasi"] = t["Mutasi"].str.replace(" ", "")
-
-    # remove string in saldo
-    for i in range(t.shape[0]):
-        m = t["Mutasi"].iloc[i]
-
-        if m != "":
-            for c in range(len(m)):
-                if m[-1:].isalpha() or m[-1:] == "-" or m[-1:] == ".":
-                    m = m[:-1]
-
-            if m[-3:-2] != ".":
-                m = m[:-2] + "." + m[-2:]
-
-            t["Mutasi"].iloc[i] = m
-
-    # replace V with / in tanggal
-    for i in range(t.shape[0]):
-        m = t["Tanggal"].iloc[i]
-
-        t["Tanggal"].iloc[i] = m.replace("V", "/")
     
-    final = t.drop(["CBG", "Saldo"], axis=1)
+    # erase any non-numeric character at the end of dates
+    for i in range(t.shape[0]):
+        p = t["Posting Date"].iloc[i]
+        e = t["Effective Date"].iloc[i]
+
+        while not p[-1:].isnumeric():
+            p = p[:-1]
+        t["Posting Date"].iloc[i] = p
+
+        while not e[-1:].isnumeric():
+            e = e[:-1]
+        t["Effective Date"].iloc[i] = e
+
+    # for posting and effective date, split and add space after date
+    t["Posting Date"] = t["Posting Date"].str[:-8] + " " + t["Posting Date"].str[-8:]
+    t["Effective Date"] = t["Effective Date"].str[:-8] + " " + t["Effective Date"].str[-8:]
+
+    # emphasize perak in amount
+    for i in range(t.shape[0]):
+        a = t["Amount"].iloc[i]
+
+        if a[-3:-2] != ".":
+            a = a[:-2] + "." + a[-2:]
+
+    final = t.copy()
 
     return final
 
+
+# global variables
+
 names = []
 dfs = []
-all = pd.DataFrame(columns=["Tanggal", "Keterangan 1", "Keterangan 2", "Mutasi"])
+all = pd.DataFrame(columns=["Posting Date", "Effective Date", "Branch", "Journal", "Transaction Description", "Amount", "DB/CR", "Balance"])
 
 start_time = time.time()
 
-pdf_name = "BCA_CORPORATE.pdf"
+
+# process starts here
+
+pdf_name = "BNI_CORPORATE.pdf"
 
 doc = fitz.open(pdf_name)
 
@@ -210,7 +234,7 @@ for page in doc:
 
 
 for name in names:
-    print("Processing " + name)
+    print("\nProcessing " + name)
 
     cnt_list, page = raw_values(name)
 
@@ -229,4 +253,4 @@ all.to_csv("transactions.csv", index=False, sep=";")
 
 end_time = time.time()
 total_time = end_time-start_time
-print("Elapsed time: " + str(total_time))
+print("\nElapsed time: " + str(total_time) + "s")
