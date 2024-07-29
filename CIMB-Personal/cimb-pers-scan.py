@@ -17,18 +17,16 @@ def raw_values(img_name, page_num):
 
     # get page height
     page_height = page.shape[0]
+    page_width = page.shape[1]
 
-    # start of table is different per page
-    if page_num == "0":
-        page = page[int(page_height * 0.395):, :]
-    else:
-        page = page[int(page_height * 0.138):, :]
+    # crop page to just the table
+    page = page[int(page_height * 0.433):, int(page_width * 0.038):int(page_width * 0.98)]
 
     # define threshold
     retval, thresh = cv2.threshold(page, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
 
     # dilation parameter; bigger tuple = smaller rectangle
-    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
+    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
 
     # apply dilation to the thresholded monochrome image
     dilation = cv2.dilate(thresh, rect_kernel, iterations=1)
@@ -59,13 +57,13 @@ def raw_values(img_name, page_num):
 
     return cnt_list, page
     
+
 def sorting(list, page, page_num):
     sorted_list = sorted(list, key = lambda x: x[0]) # sort by width first
     sorted_list = sorted(sorted_list, key = lambda x: x[1]) # then height
 
 
 
-    r = 0
 
     # create dataframe
     df = pd.DataFrame(sorted_list)
@@ -76,17 +74,16 @@ def sorting(list, page, page_num):
 
     # Remove the \n in text
     df["Text"] = df["Text"].str.replace("\n", "")
-    df = df.drop(df[(df.Text == "|") | (df.Text == "| |")].index)
+    df = df.drop(df[(df.Text == "|") | (df.Text == "| |") | (df.x == 0) | (df.y == 0)].index)
 
 
+
+    r = df[df["x"] == df["x"].min()]["y"].iloc[0]
 
     for i in range(df.shape[0]):
-        if i == 0:
-            r = df["y"].iloc[0]
-
         y = df["y"].iloc[i]
 
-        if y <= r+5:
+        if r-5 <= y <= r+5:
             df["y"].iloc[i] = r
         else:
             r = y
@@ -94,15 +91,32 @@ def sorting(list, page, page_num):
     # sort again left to right, top to bottom
     df = df.sort_values(by=["y", "x"])
 
+    for i in range(df.shape[0]):
+        y = df["y"].iloc[i]
+        next_y = y
+
+        for j in range(df.shape[0]-i):
+            new_y = df["y"].iloc[i+j]
+            if new_y != next_y:
+                next_y = new_y
+                break
+        
+        if next_y-y < 50:
+            df["y"].iloc[i] = next_y
+
+    # sort again left to right, top to bottom
+    df = df.sort_values(by=["y", "x"])
+
+    # delete saldo awal
+    if df["Text"].iloc[0].strip() == "SALDO":
+        saldo_y = df["y"].iloc[0]
+        df = df.drop(df[df.y == saldo_y].index)
 
 
     t = pd.DataFrame(columns=["Tanggal Transaksi", "Uraian Transaksi", "Teller", "Debet", "Kredit", "Saldo"])
 
-    tantran="";uratra="";teller="";debet="";kredit="";saldo=""
-    tantrans=[];uratras=[];tellers=[];debets=[];kredits=[];saldos=[]
-
-    # prevents summary at the end of pdf to be added
-    # exit = 0 # if SALDO and AWAL is detected in columns keterangan1 and keterangan2 correspondingly, append arrays and break
+    tt="";tv="";uratra="";bg="";debet="";kredit="";saldo=""
+    tts=[];tvs=[];uratras=[];bgs=[];debets=[];kredits=[];saldos=[]
 
     df = df._append({"x": 500, "y": 0, "Text": "a"}, ignore_index=True)
 
@@ -110,68 +124,59 @@ def sorting(list, page, page_num):
         x = df["x"].iloc[i]
         text = df["Text"].iloc[i]
         
-        if x < 870:
-            if uratra != "" or not 350 < x:
-                tantrans.append(tantran)
+        if x < 350:
+            if tv != "":
+                tts.append(tt)
+                tvs.append(tv)
                 uratras.append(uratra)
-                tellers.append(teller)
+                bgs.append(bg)
                 debets.append(debet)
                 kredits.append(kredit)
                 saldos.append(saldo)
 
-                tantran="";uratra="";teller="";debet="";kredit="";saldo=""
+                tt="";tv="";uratra="";bg="";debet="";kredit="";saldo=""
                 
-            if text.strip() == "Saldo" or text.strip() == "Opening":
-                tantrans.append(tantran)
+            if text.strip() == "Terima" or text.strip() == "Total" or "Dis" in text.strip():
+                tts.append(tt)
+                tvs.append(tv)
                 uratras.append(uratra)
-                tellers.append(teller)
+                bgs.append(bg)
                 debets.append(debet)
                 kredits.append(kredit)
                 saldos.append(saldo)
 
                 break
             
-            tantran += text
-        elif 870 < x < 2500:
+            tt += text
+        elif 350 < x < 870:
+            tv += text
+        elif 870 < x < 2400:
             uratra += text + " "
-        elif 2500 < x < 2850:
-            teller += text
-        elif 2850 < x < 3750:
+        elif 2400 < x < 2950:
+            bg += text
+        elif 2950 < x < 3600:
             debet += text
-        elif 3750 < x < 4550:
+        elif 3600 < x < 4250:
             kredit += text
-        elif 4550 < x:
-            if "/" in text:
-                tantrans.append(tantran)
-                uratras.append(uratra)
-                tellers.append(teller)
-                debets.append(debet)
-                kredits.append(kredit)
-                saldos.append(saldo)
-
-                break
-            else:
-                saldo += text
+        elif 4250 < x:
+            saldo += text
 
     t = pd.DataFrame({
-                "Tanggal Transaksi": tantrans,
+                "Tgl Txn": tts,
+                "Tgl Valuta": tvs,
                 "Uraian Transaksi": uratras,
-                "Teller": tellers,
+                "No. Cek/BG": bgs,
                 "Debet": debets,
                 "Kredit": kredits,
                 "Saldo": saldos
             })
 
-    t = t[t["Tanggal Transaksi"].str.contains("a") == False] # delete
-    t = t[(t["Tanggal Transaksi"] == "") == False]
-
+    t = t[t["Tgl Txn"].str.contains("a") == False] # delete
+    t = t[(t["Tgl Txn"] == "") == False]
 
 
     # remove every element's last character (which is some unnecessary space)
     t["Uraian Transaksi"] = t["Uraian Transaksi"].str[:-1]
-
-    # for posting and effective date, split and add space after date
-    t["Tanggal Transaksi"] = t["Tanggal Transaksi"].str[:-8] + " " + t["Tanggal Transaksi"].str[-8:]
 
     # emphasize perak in amount
     for i in range(t.shape[0]):
@@ -180,13 +185,13 @@ def sorting(list, page, page_num):
         s = t["Saldo"].iloc[i]
 
         if d[-3:-2] != ".":
-            d = d[:-2] + "." + d[-2:]
+            t["Debet"].iloc[i] = d[:-2] + "." + d[-2:]
 
         if k[-3:-2] != ".":
-            k = k[:-2] + "." + k[-2:]
+            t["Kredit"].iloc[i] = k[:-2] + "." + k[-2:]
 
         if s[-3:-2] != ".":
-            s = s[:-2] + "." + s[-2:]
+            t["Saldo"].iloc[i] = s[:-2] + "." + s[-2:]
     
     # final = t.drop(["CBG", "Saldo"], axis=1)
     final = t.copy()
@@ -198,14 +203,14 @@ def sorting(list, page, page_num):
 
 names = []
 dfs = []
-all = pd.DataFrame(columns=["Tanggal Transaksi", "Uraian Transaksi", "Teller", "Debet", "Kredit", "Saldo"])
+all = pd.DataFrame(columns=["Tgl Txn", "Tgl Valuta", "Uraian Transaksi", "No. Cek/BG", "Debet", "Kredit", "Saldo"])
 
 start_time = time.time()
 
 
 # process starts here
 
-pdf_name = "BRI_PERSONAL.pdf"
+pdf_name = "CIMB_PERSONAL.pdf"
 
 doc = fitz.open(pdf_name)
 
