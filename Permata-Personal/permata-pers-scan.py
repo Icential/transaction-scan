@@ -18,17 +18,14 @@ def raw_values(img_name, page_num):
     # get page height
     page_height = page.shape[0]
 
-    # start of table is different per page
-    if page_num == "0":
-        page = page[int(page_height * 0.365):, :]
-    else:
-        page = page[int(page_height * 0.332):, :]
+    # crop to only table
+    page = page[int(page_height * 0.41):, :]
 
     # define threshold
     retval, thresh = cv2.threshold(page, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
 
     # dilation parameter; bigger tuple = smaller rectangle
-    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (13, 13))
+    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
 
     # apply dilation to the thresholded monochrome image
     dilation = cv2.dilate(thresh, rect_kernel, iterations=1)
@@ -101,10 +98,10 @@ def sorting(list, page, page_num):
 
 
 
-    t = pd.DataFrame(columns=["Tgl Trans", "Tgl Valuta", "Keterangan", "Reff", "Debit", "Kredit", "Saldo"])
+    t = pd.DataFrame(columns=["Tgl Trx", "Tgl Valuta", "Uraian", "Debit", "Kredit", "Saldo"])
 
-    tt="";tv="";keterangan="";reff="";debit="";kredit="";saldo=""
-    tts=[];tvs=[];keterangans=[];reffs=[];debits=[];kredits=[];saldos=[]
+    tt="";tv="";uraian="";debit="";kredit="";saldo=""
+    tts=[];tvs=[];uraians=[];debits=[];kredits=[];saldos=[]
 
     # prevents summary at the end of pdf to be added
     # exit = 0 # if SALDO and AWAL is detected in columns keterangan1 and keterangan2 correspondingly, append arrays and break
@@ -119,44 +116,39 @@ def sorting(list, page, page_num):
             if tv != "":
                 tts.append(tt)
                 tvs.append(tv)
-                keterangans.append(keterangan)
-                reffs.append(reff)
+                uraians.append(uraian)
                 debits.append(debit)
                 kredits.append(kredit)
                 saldos.append(saldo)
 
-                tt="";tv="";keterangan="";reff="";debit="";kredit="";saldo=""
+                tt="";tv="";uraian="";debit="";kredit="";saldo=""
             
             tt += text
-        elif 550 < x < 750:
-            tv += text + " "
-        elif 750 < x < 1800:
-            if text.strip() == "TOTAL":
+        elif 550 < x < 950:
+            tv += text
+        elif 950 < x < 2300:
+            uraian += text + " "
+        elif 2300 < x < 3100:
+            debit += text
+        elif 3100 < x < 4000:
+            if text.strip() == "Halaman":
                 tts.append(tt)
                 tvs.append(tv)
-                keterangans.append(keterangan)
-                reffs.append(reff)
+                uraians.append(uraian)
                 debits.append(debit)
                 kredits.append(kredit)
                 saldos.append(saldo)
 
                 break
             else:
-                keterangan += text + " "
-        elif 1800 < x < 2600:
-            reff += text
-        elif 2600 < x < 3350:
-            debit += text
-        elif 3350 < x < 4000:
-            kredit += text
+                kredit += text
         elif 4000 < x:
             saldo += text
 
     t = pd.DataFrame({
                 "Tgl Trans": tts,
                 "Tgl Valuta": tvs,
-                "Keterangan": keterangans,
-                "Reff": reffs,
+                "Uraian": uraians,
                 "Debit": debits,
                 "Kredit": kredits,
                 "Saldo": saldos
@@ -168,12 +160,7 @@ def sorting(list, page, page_num):
 
 
     # remove every element's last character (which is some unnecessary space)
-    t["Keterangan"] = t["Keterangan"].str[:-1]
-
-    # no space in dates amnd values
-    for column in t.columns:
-        if column != "Keterangan":
-            t[column] = t[column].str.replace(" ", "")
+    t["Uraian"] = t["Uraian"].str[:-1]
 
     # emphasize perak in amount
     for i in range(t.shape[0]):
@@ -181,14 +168,24 @@ def sorting(list, page, page_num):
         k = t["Kredit"].iloc[i]
         s = t["Saldo"].iloc[i]
 
-        if d[-3:-2] != ".":
+        while not d[-1:].isnumeric() and not d.strip() == "":
+            d = d[:-1]
+
+        while not k[-1:].isnumeric() and not k.strip() == "":
+            k = k[:-1]
+
+        while not s[-1:].isnumeric() and not k.strip() == "":
+            s = s[:-1]
+
+        if d[-3:-2] != "." and d[-3:-2] != ",":
             t["Debit"].iloc[i] = d[:-2] + "." + d[-2:]
 
-        if k[-3:-2] != ".":
+        if k[-3:-2] != "." and k[-3:-2] != ",":
             t["Kredit"].iloc[i] = k[:-2] + "." + k[-2:]
 
-        if s[-3:-2] != ".":
+        if s[-3:-2] != "." and s[-3:-2] != ",":
             t["Saldo"].iloc[i] = s[:-2] + "." + s[-2:]
+
     
     # final = t.drop(["CBG", "Saldo"], axis=1)
     final = t.copy()
@@ -200,14 +197,14 @@ def sorting(list, page, page_num):
 
 names = []
 dfs = []
-all = pd.DataFrame(columns=["Tgl Trans", "Tgl Valuta", "Keterangan", "Reff", "Debit", "Kredit", "Saldo"])
+all = pd.DataFrame(columns=["Tgl Trx", "Tgl Valuta", "Uraian", "Debit", "Kredit", "Saldo"])
 
 start_time = time.time()
 
 
 # process starts here
 
-pdf_name = "DANAMON_PERSONAL.pdf"
+pdf_name = "PERMATA_PERSONAL.pdf"
 
 doc = fitz.open(pdf_name)
 
