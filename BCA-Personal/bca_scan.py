@@ -2,8 +2,8 @@
 import cv2
 import pandas as pd
 import fitz
-import matplotlib.pyplot as plt
 import pytesseract
+import time
 
 def raw_values(img_name):
     # define tesseract OCT model 
@@ -100,7 +100,7 @@ def sorting(list, page):
         x = df["x"].iloc[i]
         text = df["Text"].iloc[i]
         
-        if 0 < x < 700:
+        if x < 700:
             if keterangan1_text != "":
                 tanggals.append(tanggal_text)
                 keterangan1s.append(keterangan1_text)
@@ -126,7 +126,7 @@ def sorting(list, page):
             cbg_text += text + " "
         elif 2900 < x < 4000:
             mutasi_text += text + " "
-        elif 4000 < x < page.shape[1]:
+        elif 4000 < x:
             saldo_text += text + " "
 
         if exit == 2:
@@ -185,8 +185,16 @@ def sorting(list, page):
 
     return final
 
+# global variables
+
 names = []
-all = pd.DataFrame()
+dfs = []
+all = pd.DataFrame(columns=["Tanggal", "Keterangan 1", "Keterangan 2", "Mutasi"])
+
+start_time = time.time()
+
+
+# process starts here
 
 pdf_name = "Adi.pdf"
 
@@ -198,9 +206,25 @@ for page in doc:
     names.append(name)
     pix.save(name)
 
+
 for name in names:
+    print("\nProcessing " + name)
+
+    page_num = name[-5:-4]
+
     cnt_list, page = raw_values(name)
+
     trans = sorting(cnt_list, page)
-    all = pd.concat([all, trans])
+
+    dfs.append(trans)
+
+for df in dfs:
+    all = all._append(df, sort=False)
+
+df = df.reset_index(drop = True)
 
 all.to_csv("transactions.csv", index=False, sep=";")
+
+end_time = time.time()
+total_time = end_time-start_time
+print("\nElapsed time: " + str(total_time) + "s")
