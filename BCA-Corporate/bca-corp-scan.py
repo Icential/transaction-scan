@@ -2,8 +2,8 @@
 import cv2
 import pandas as pd
 import fitz
-import matplotlib.pyplot as plt
 import pytesseract
+import time
 
 def raw_values(img_name):
     # define tesseract OCT model 
@@ -86,6 +86,16 @@ def sorting(list, page, page_num):
     # sort again left to right, top to bottom
     df = df.sort_values(by=["y", "x"])
 
+    # delete y=0 elements
+    df = df.drop(df[df.y == 0].index)
+
+    # delete saldo awal
+    if df["Text"].iloc[1].strip() == "SALDO":
+        saldo_y = df["y"].iloc[0]
+        df = df.drop(df[df.y == saldo_y].index)
+
+    print(df)
+
     t = pd.DataFrame(columns=["Tanggal", "Keterangan 1", "Keterangan 2", "CBG", "Mutasi", "Saldo"])
 
     tanggal_text = ""; keterangan1_text = ""; keterangan2_text = ""; cbg_text = ""; mutasi_text = ""; saldo_text = ""
@@ -100,7 +110,7 @@ def sorting(list, page, page_num):
         x = df["x"].iloc[i]
         text = df["Text"].iloc[i]
         
-        if 0 < x < 700:
+        if x < 700:
             if keterangan1_text != "":
                 tanggals.append(tanggal_text)
                 keterangan1s.append(keterangan1_text)
@@ -111,10 +121,10 @@ def sorting(list, page, page_num):
 
                 tanggal_text = ""; keterangan1_text = ""; keterangan2_text = ""; cbg_text = ""; mutasi_text = ""; saldo_text = ""
 
-            tanggal_text += text + ""
+            tanggal_text += text
         elif 700 < x < 1550:
             if text == "SALDO" or text == "AWAL":
-                if page_num == "0":
+                if page_num == 0:
                     continue
                 else:
                     exit += 1
@@ -122,7 +132,7 @@ def sorting(list, page, page_num):
                 keterangan1_text += text + " "
         elif 1550 < x < 2500:
             if text == "SALDO" or text == "AWAL":
-                if page_num == "0":
+                if page_num == 0:
                     continue
                 else:
                     exit += 1
@@ -132,7 +142,7 @@ def sorting(list, page, page_num):
             cbg_text += text + " "
         elif 2900 < x < 4000:
             mutasi_text += text + " "
-        elif 4000 < x < page.shape[1]:
+        elif 4000 < x:
             saldo_text += text + " "
 
         if exit == 2:
@@ -155,8 +165,8 @@ def sorting(list, page, page_num):
                 "Mutasi": mutasis,
                 "Saldo": saldos 
             })
-    
-    t = t[t["Keterangan 1"].str.contains("AWAL") == False] # delete very first row
+
+    t = t[t["Keterangan 1"].str.contains("AWAL") == False]
     t = t[t["Tanggal"].str.contains("a") == False] # delete
 
     # remove every element's last character (which is some unnecessary space)
@@ -191,9 +201,16 @@ def sorting(list, page, page_num):
 
     return final
 
+
+# global variables
+
 names = []
 dfs = []
 all = pd.DataFrame(columns=["Tanggal", "Keterangan 1", "Keterangan 2", "Mutasi"])
+start_time = time.time()
+
+
+# process starts here
 
 pdf_name = "BCA_CORPORATE.pdf"
 
@@ -223,3 +240,7 @@ for df in dfs:
 df = df.reset_index(drop = True)
 
 all.to_csv("transactions.csv", index=False, sep=";")
+
+end_time = time.time()
+total_time = end_time-start_time
+print("\nElapsed time: " + str(total_time) + "s")
