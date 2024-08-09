@@ -1,0 +1,4 @@
+
+/models/OCR/data
+models/OCR/mnist_test_final.csv
+models/OCR/mnist_train_final.csv
