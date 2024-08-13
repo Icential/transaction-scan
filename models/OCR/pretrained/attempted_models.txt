@@ -1,0 +1,5 @@
+List of Models That Have Been Tested:
+- PyTesseract: Standard (slow but somewhat accurate)
+- TesserOcr: Same as standard
+- EasyOCR: Same as standard
+- TrOCR_small: Slower than standard
