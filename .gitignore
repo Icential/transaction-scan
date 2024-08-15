@@ -2,3 +2,7 @@
 /models/OCR/data
 models/OCR/mnist_test_final.csv
 models/OCR/mnist_train_final.csv
+models/OCR/scratch/data/EMNIST/raw/emnist-balanced-train.csv
+models/OCR/scratch/data/EMNIST/raw/emnist-balanced-test.csv
+models/OCR/scratch/mnist_train_final.csv
+models/OCR/scratch/mnist_test_final.csv
