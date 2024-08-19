@@ -1,0 +1,4 @@
+The TinyVMM model is good at predicting MNIST with a training and test accuracy of 98%
+However it is more mediocre in EMNIST with an accuracy of 80% in the test set
+It is even more mediocre when put into an OCR
+Therefore this model has bad generalization
