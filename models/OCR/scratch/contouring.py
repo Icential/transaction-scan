@@ -8,7 +8,7 @@ import time
 start_time = time.time()
 
 # ### Image Processing
-sample = cv2.imread("data/digits/len3.png")
+sample = cv2.imread("data/digits/len8.png")
 sample = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
 _, thresh = cv2.threshold(sample, 125, 255, cv2.THRESH_BINARY_INV)
 
@@ -79,10 +79,12 @@ model = TinyVGG().to(device)
 load_model(model, "tinyvgg.safetensors")
 
 
+resizes = []
 for i in range(len(crops)):
 
     # Resizing
     linear_resize = cv2.resize(crops[i], (28, 28), cv2.INTER_LINEAR)
+    resizes.append(linear_resize)
 
     pic = torch.from_numpy(linear_resize).unsqueeze(dim=0).unsqueeze(dim=0).type(torch.float32).to(device)
 
@@ -97,6 +99,11 @@ for i in range(len(crops)):
     cv2.putText(copy, digit, (bboxs[i][0], bboxs[i][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3)
 
 print(f"\nTime Elapsed: {time.time() - start_time}s")
+
+for i in range(8):
+    plt.subplot(2,5,i+1)
+    plt.imshow(resizes[i], cmap="gray")
+plt.show()
 
 plt.imshow(copy, cmap="gray")
 plt.show()
