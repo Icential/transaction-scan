@@ -12,7 +12,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 start_time = time.time()
 
 # ### Image Processing
-sample = cv2.imread("data/digits/len8.png")
+sample = cv2.imread("data/digits/len10.png")
 sample = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
 _, thresh = cv2.threshold(sample, 125, 255, cv2.THRESH_BINARY_INV)
 
