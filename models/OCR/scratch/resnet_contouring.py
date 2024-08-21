@@ -44,24 +44,33 @@ for cnt in contours:
 
 
 # ### Model Insertion
-model = torch.hub.load('pytorch/vision:v0.10.0', "resnet18", pretrained=False)
-model.to(device)
-load_model(model, "resnet_ocr.safetensors")
-
+resnet = torch.hub.load('pytorch/vision:v0.10.0', "resnet18", pretrained=False)
 
 transformation = transforms.Compose([
-    transforms.Resize(256),
+    transforms.Resize((28, 28)),
     transforms.Grayscale(3),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
+
+class ModifiedModel(nn.Module):
+    def __init__(self, pretrained):
+        super().__init__()
+        self.pretrained = pretrained
+        self.output = nn.Linear(1000, 10) # output only 10 classifications
+
+    def forward(self, x):
+        x = self.pretrained(x)
+        return self.output(x)
+
+model = ModifiedModel(resnet).to(device)
+load_model(model, "resnet_mnist.safetensors")
 
 for i in range(len(crops)):
 
     # Transforms
     pil_img = Image.fromarray(crops[i])
     post = transformation(pil_img)
-    pic = post.unsqueeze(dim=0).type(torch.float32).to(device)
+    pic = post.unsqueeze(dim=0).to(device)
 
     model.eval()
     with torch.inference_mode():
@@ -69,10 +78,10 @@ for i in range(len(crops)):
         results = results[:, :10]
         pred = results.argmax(dim=1)
         conf = torch.softmax(results, dim=1)[0][pred] * 100
-        digit = str(pred.item())
+        digit = pred.item()
 
     cv2.rectangle(copy, (bboxs[i][0], bboxs[i][1]), (bboxs[i][0] + bboxs[i][2], bboxs[i][1] + bboxs[i][3]), (0, 255, 0), 2)
-    cv2.putText(copy, digit, (bboxs[i][0], bboxs[i][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3)
+    cv2.putText(copy, f"{digit}", (bboxs[i][0], bboxs[i][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3)
 
 print(f"\nTime Elapsed: {time.time() - start_time}s")
 
