@@ -12,7 +12,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 start_time = time.time()
 
 # ### Image Processing
-sample = cv2.imread("data/digits/len10.png")
+sample = cv2.imread("data/digits/len50.png")
 sample = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
 _, thresh = cv2.threshold(sample, 125, 255, cv2.THRESH_BINARY_INV)
 
@@ -20,7 +20,7 @@ _, thresh = cv2.threshold(sample, 125, 255, cv2.THRESH_BINARY_INV)
 # ### Contouring
 
 # dilation parameter; bigger tuple = smaller rectangle
-rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 1))
+rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 1))
 
 # apply dilation to the thresholded monochrome image
 dilation = cv2.dilate(thresh, rect_kernel, iterations=1)
