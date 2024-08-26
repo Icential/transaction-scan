@@ -21,8 +21,11 @@
 
     ],
     "ner":[
+      "ATTRIBUTE",
       "LOCATION",
-      "SUBJECT"
+      "LOGIC",
+      "SUBJECT",
+      "VALUE"
     ]
   },
   "pipeline":[
@@ -37,32 +40,37 @@
 
   ],
   "performance":{
-    "ents_f":0.0,
-    "ents_p":0.0,
-    "ents_r":0.0,
+    "ents_f":1.0,
+    "ents_p":1.0,
+    "ents_r":1.0,
     "ents_per_type":{
+      "SUBJECT":{
+        "p":1.0,
+        "r":1.0,
+        "f":1.0
+      },
+      "LOCATION":{
+        "p":1.0,
+        "r":1.0,
+        "f":1.0
+      },
       "ATTRIBUTE":{
-        "p":0.0,
-        "r":0.0,
-        "f":0.0
+        "p":1.0,
+        "r":1.0,
+        "f":1.0
       },
       "LOGIC":{
-        "p":0.0,
-        "r":0.0,
-        "f":0.0
+        "p":1.0,
+        "r":1.0,
+        "f":1.0
       },
       "VALUE":{
-        "p":0.0,
-        "r":0.0,
-        "f":0.0
-      },
-      "SUBJECT":{
-        "p":0.0,
-        "r":0.0,
-        "f":0.0
+        "p":1.0,
+        "r":1.0,
+        "f":1.0
       }
     },
-    "transformer_loss":0.0000008933,
-    "ner_loss":124.2864541033
+    "transformer_loss":0.0000004577,
+    "ner_loss":7713.9552601092
   }
 }
