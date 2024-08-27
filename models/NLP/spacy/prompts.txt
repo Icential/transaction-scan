@@ -1,11 +1,9 @@
 cari customer dari jakarta
 dapatkan kontrak bunga dibawah 24 bulan
-ambil tenor kurang dari 12 bulan
 tampilkan data contract dari cabang tangerang
 cashier dari cabang cideng
 tampilkan data kontrak dari tomang
 kasir dari cabang grogol
-tenor kurang dari 120 bulan
 cari data kontrak tenor di bawah 3 bulan
 kontrak tenor kurang dari 6 bulan
 kontrak yang tenor lebih dari 24 bulan
@@ -35,7 +33,7 @@ lihat kontrak bunganya di atas 10%
 tunjuk data kasir dari grogol
 data kontrak dari cabang tomang
 tampil data cashier dari cideng
-contract dr cabang angerang
+contract dr cabang tangerang
 dapatkan data kasir dr grogol
 kontrak dari tomang
 data cashier dari cideng
@@ -45,6 +43,22 @@ data kontrak dari tomang
 data cashier dari cideng
 dapetkan data contract dari cabang Tangerang
 kasir dr grogol
-tunjukan data kontrak daritomang
+tunjukan data kontrak dari tomang
 data cashier dari cideng
 contract dari tangerang
+mau lihat kontrak yang berasal dari tangerang dan jakarta
+tampilkan kontrak yang tenornya lebih dari 12 bulan tapi kurang dari 24 bulan
+kontrak yg lebih atau sama dengan 6 bulan
+tunjukan kontrak yg punya tenor yg lebih dr 24 bulan tapi kurang dari 38 bulan
+kustomer yang di alam sutera dan cideng
+data kustomer yg umur diatas 20 tahun tapi kurang dari 30 tahun
+ambil kustomer yg umurnya di bawah atau sama dengan 40 tahun
+tunjuk data kasir yg dari alam sutera dan tangerang
+kontrak yg dr jakarta, tangerang, grogol
+kustomer yang umurnya diatas atau sama dengan 20 tahun
+data kustomer yang diantara umur 50 tahun dan 60 tahun
+ambilkan kontrak yang tenornya diantara 6 bulan dan 12 bulan
+kasir yang umurnya 20 tahun
+tunjukkan kasir yg pny umur di antara 10 tahun dan 20 tahun
+lihat kontrak yg punya bunga antara 1% dan 5%
+bunga kontrak yg di antara 5% dan 10%

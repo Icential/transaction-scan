@@ -22,7 +22,6 @@
     ],
     "ner":[
       "ATTRIBUTE",
-      "LOCATION",
       "LOGIC",
       "SUBJECT",
       "VALUE"
@@ -49,11 +48,6 @@
         "r":1.0,
         "f":1.0
       },
-      "LOCATION":{
-        "p":1.0,
-        "r":1.0,
-        "f":1.0
-      },
       "ATTRIBUTE":{
         "p":1.0,
         "r":1.0,
@@ -70,7 +64,7 @@
         "f":1.0
       }
     },
-    "transformer_loss":0.0000004577,
-    "ner_loss":7713.9552601092
+    "transformer_loss":0.0000002215,
+    "ner_loss":6589.5686100318
   }
 }
