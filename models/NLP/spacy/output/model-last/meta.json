@@ -22,6 +22,8 @@
     ],
     "ner":[
       "ATTRIBUTE",
+      "CONJUNCTION",
+      "LOCATION",
       "LOGIC",
       "SUBJECT",
       "VALUE"
@@ -39,32 +41,42 @@
 
   ],
   "performance":{
-    "ents_f":1.0,
-    "ents_p":1.0,
-    "ents_r":1.0,
+    "ents_f":0.9411764706,
+    "ents_p":0.9230769231,
+    "ents_r":0.96,
     "ents_per_type":{
       "SUBJECT":{
-        "p":1.0,
+        "p":0.9375,
         "r":1.0,
-        "f":1.0
+        "f":0.9677419355
       },
       "ATTRIBUTE":{
         "p":1.0,
-        "r":1.0,
-        "f":1.0
+        "r":0.875,
+        "f":0.9333333333
       },
       "LOGIC":{
         "p":1.0,
-        "r":1.0,
-        "f":1.0
+        "r":0.875,
+        "f":0.9333333333
       },
       "VALUE":{
+        "p":0.8,
+        "r":1.0,
+        "f":0.8888888889
+      },
+      "LOCATION":{
         "p":1.0,
         "r":1.0,
         "f":1.0
+      },
+      "CONJUNCTION":{
+        "p":0.5,
+        "r":1.0,
+        "f":0.6666666667
       }
     },
-    "transformer_loss":0.0000002215,
-    "ner_loss":6589.5686100318
+    "transformer_loss":0.0000428348,
+    "ner_loss":9307.6540250224
   }
 }

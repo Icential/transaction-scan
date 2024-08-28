@@ -54,7 +54,7 @@ kustomer yang di alam sutera dan cideng
 data kustomer yg umur diatas 20 tahun tapi kurang dari 30 tahun
 ambil kustomer yg umurnya di bawah atau sama dengan 40 tahun
 tunjuk data kasir yg dari alam sutera dan tangerang
-kontrak yg dr jakarta, tangerang, grogol
+kontrak yg dr jakarta, tangerang, dan grogol
 kustomer yang umurnya diatas atau sama dengan 20 tahun
 data kustomer yang diantara umur 50 tahun dan 60 tahun
 ambilkan kontrak yang tenornya diantara 6 bulan dan 12 bulan
@@ -62,3 +62,13 @@ kasir yang umurnya 20 tahun
 tunjukkan kasir yg pny umur di antara 10 tahun dan 20 tahun
 lihat kontrak yg punya bunga antara 1% dan 5%
 bunga kontrak yg di antara 5% dan 10%
+data kasir yang di grogol dan umurnya diatas 20
+kontrak yg dari alam sutera atau tenor yg dibawah 12 bulan
+tampilkan kustomer yg mempunyai umur dibawah 20 tahun atau lebih dari 60 tahun
+ambilkan kontrak yg tenor di atas 12 bulan dan di alam sutera
+data kontrak yg dari tomang yang tenornya dibawah 6 bulan dan di jakarta
+kasir yang ada di tangerang atau umur yang lebih dari 30 tahun
+perlihatkan kustomer yang umurnya di atas 30 tahun dan di grogol
+tunjukan cashier yang di tangerang dan usianya di bawah 20 tahun
+data kontrak yang ada di jakarta dan bunganya di atas 10%
+mau lihat kontrak yg ada di cideng dan bunga di bawah 5%
